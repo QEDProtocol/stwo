@@ -226,6 +226,18 @@ impl Hasher for PoseidonHasher {
     fn concat_and_hash(_v1: &PoseidonHash, _v2: &PoseidonHash) -> PoseidonHash {
         unimplemented!("concat_and_hash for PoseidonHasher")
     }
+    
+    fn hash_with_nonce(&self, _seed: &[Self::NativeType], _nonce: u64) -> Self::Hash {
+        /*
+        let lower30 = (nonce&0x3fffffffu64) as u32;
+        let mid30 = ((nonce>>30u64)&0x3fffffffu64) as u32;
+        let high4 = ((nonce>>60u64)&0xfu64) as u32;*/
+
+
+        
+
+        todo!()
+    }
 }
 
 #[cfg(test)]

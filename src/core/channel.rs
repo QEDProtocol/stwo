@@ -5,8 +5,7 @@ use super::fields::qm31::SecureField;
 use super::fields::secure_column::SECURE_EXTENSION_DEGREE;
 use super::fields::IntoSlice;
 use crate::commitment_scheme::blake2_hash::{Blake2sHash, Blake2sHasher};
-use crate::commitment_scheme::hasher::Hasher;
-
+use crate::commitment_scheme::hasher::{Hasher, Hash};
 pub const BLAKE_BYTES_PER_HASH: usize = 32;
 pub const FELTS_PER_HASH: usize = 8;
 pub const EXTENSION_FELTS_PER_HASH: usize = 2;
@@ -29,7 +28,9 @@ impl ChannelTime {
 }
 
 pub trait Channel {
-    type Digest;
+    type Digest: Hash<Self::NativeType>;
+    type NativeType: Sized + Eq + Clone;
+    type Hasher: Hasher<Hash = Self::Digest, NativeType = Self::NativeType>;
 
     const BYTES_PER_HASH: usize;
 
@@ -83,7 +84,9 @@ impl Blake2sChannel {
 }
 
 impl Channel for Blake2sChannel {
+    type NativeType = u8;
     type Digest = Blake2sHash;
+    type Hasher = Blake2sHasher;
     const BYTES_PER_HASH: usize = BLAKE_BYTES_PER_HASH;
 
     fn new(digest: Self::Digest) -> Self {

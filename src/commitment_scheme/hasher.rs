@@ -24,7 +24,7 @@ pub trait Name {
 
 pub trait Hasher: Sized + Default {
     type Hash: Hash<Self::NativeType>;
-    type NativeType: Sized + Eq;
+    type NativeType: Sized + Eq + Clone;
 
     // Input size of the compression function.
     const BLOCK_SIZE: usize;
@@ -52,6 +52,7 @@ pub trait Hasher: Sized + Default {
         hasher.update(data);
         hasher.finalize()
     }
+    fn hash_with_nonce(&self, seed: &[Self::NativeType], nonce: u64) -> Self::Hash;
 
     /// Hash many inputs of the same length.
     /// Writes output directly to corresponding pointers in dst.

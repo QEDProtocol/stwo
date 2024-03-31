@@ -114,6 +114,15 @@ impl super::hasher::Hasher for Blake2sHasher {
                 hasher.finalize_variable(out).unwrap();
             })
     }
+    
+    fn hash_with_nonce(&self, seed: &[Self::NativeType], nonce: u64) -> Self::Hash {
+        let hash_input = seed
+            .iter()
+            .chain(nonce.to_le_bytes().iter())
+            .cloned()
+            .collect::<Vec<_>>();
+        Blake2sHasher::hash(&hash_input)
+    }
 }
 
 #[cfg(test)]
