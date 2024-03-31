@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use super::utils::get_column_chunk;
 use crate::core::fields::Field;
 
@@ -117,7 +119,7 @@ impl<'a, F: Field> MerkleTreeInput<'a, F> {
 /// The column layout of a mixed degree merkle tree.
 /// The sizes of columns assigned to every layer, ordered as they were inserted & injected into hash
 /// blocks.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Serialize)]
 pub struct MerkleTreeColumnLayout {
     column_sizes: Vec<usize>,
     injected_depths_map: Vec<Vec<usize>>,

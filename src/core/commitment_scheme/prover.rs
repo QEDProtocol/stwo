@@ -2,10 +2,10 @@ use std::iter::zip;
 use std::ops::Deref;
 
 use itertools::Itertools;
+use serde::Serialize;
 
 use super::super::backend::cpu::{CPUCircleEvaluation, CPUCirclePoly};
 use super::super::backend::CPUBackend;
-use super::super::channel::Blake2sChannel;
 use super::super::circle::CirclePoint;
 use super::super::fields::m31::BaseField;
 use super::super::fields::qm31::SecureField;
@@ -19,15 +19,15 @@ use super::super::prover::{
 use super::super::ColumnVec;
 use super::quotients::{compute_fri_quotients, PointSample};
 use super::utils::TreeVec;
-use crate::commitment_scheme::blake2_hash::{Blake2sHash, Blake2sHasher};
 use crate::commitment_scheme::merkle_input::{MerkleTreeColumnLayout, MerkleTreeInput};
 use crate::commitment_scheme::mixed_degree_decommitment::MixedDecommitment;
 use crate::commitment_scheme::mixed_degree_merkle_tree::MixedDegreeMerkleTree;
-use crate::core::channel::Channel;
+use crate::commitment_scheme::sha256_hash::{Sha256Hash, Sha256Hasher};
+use crate::core::channel::{Channel, Sha256Channel};
 use crate::core::poly::circle::SecureEvaluation;
 
-type MerkleHasher = Blake2sHasher;
-type ProofChannel = Blake2sChannel;
+type MerkleHasher = Sha256Hasher;
+type ProofChannel = Sha256Channel;
 
 /// The prover side of a FRI polynomial commitment scheme. See [super].
 pub struct CommitmentSchemeProver {
@@ -48,7 +48,7 @@ impl CommitmentSchemeProver {
         self.trees.push(tree);
     }
 
-    pub fn roots(&self) -> TreeVec<Blake2sHash> {
+    pub fn roots(&self) -> TreeVec<Sha256Hash> {
         self.trees.as_ref().map(|tree| tree.root())
     }
 
@@ -134,7 +134,7 @@ impl CommitmentSchemeProver {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize)]
 pub struct CommitmentSchemeProof {
     pub sampled_values: TreeVec<ColumnVec<Vec<SecureField>>>,
     pub decommitments: TreeVec<MixedDecommitment<BaseField, MerkleHasher>>,
@@ -148,7 +148,7 @@ pub struct CommitmentSchemeProof {
 pub struct CommitmentTreeProver {
     pub polynomials: ColumnVec<CPUCirclePoly>,
     pub evaluations: ColumnVec<CPUCircleEvaluation<BaseField, BitReversedOrder>>,
-    pub commitment: MixedDegreeMerkleTree<BaseField, Blake2sHasher>,
+    pub commitment: MixedDegreeMerkleTree<BaseField, Sha256Hasher>,
     column_layout: MerkleTreeColumnLayout,
 }
 
@@ -182,7 +182,7 @@ impl CommitmentTreeProver {
         }
 
         let (tree, root) =
-            MixedDegreeMerkleTree::<BaseField, Blake2sHasher>::commit_default(&merkle_input);
+            MixedDegreeMerkleTree::<BaseField, Sha256Hasher>::commit_default(&merkle_input);
         channel.mix_digest(root);
 
         let column_layout = merkle_input.column_layout();
@@ -201,7 +201,7 @@ impl CommitmentTreeProver {
         queries: ColumnVec<Vec<usize>>,
     ) -> (
         ColumnVec<Vec<BaseField>>,
-        MixedDecommitment<BaseField, Blake2sHasher>,
+        MixedDecommitment<BaseField, Sha256Hasher>,
     ) {
         let values = zip(&self.evaluations, &queries)
             .map(|(column, column_queries)| column_queries.iter().map(|q| column[*q]).collect())
@@ -222,7 +222,7 @@ impl CommitmentTreeProver {
 }
 
 impl Deref for CommitmentTreeProver {
-    type Target = MixedDegreeMerkleTree<BaseField, Blake2sHasher>;
+    type Target = MixedDegreeMerkleTree<BaseField, Sha256Hasher>;
 
     fn deref(&self) -> &Self::Target {
         &self.commitment

@@ -2,7 +2,6 @@ use std::iter::zip;
 
 use itertools::Itertools;
 
-use super::super::channel::Blake2sChannel;
 use super::super::circle::CirclePoint;
 use super::super::fields::m31::BaseField;
 use super::super::fields::qm31::SecureField;
@@ -14,13 +13,13 @@ use super::super::prover::{
 use super::quotients::{fri_answers, PointSample};
 use super::utils::TreeVec;
 use super::CommitmentSchemeProof;
-use crate::commitment_scheme::blake2_hash::{Blake2sHash, Blake2sHasher};
 use crate::commitment_scheme::mixed_degree_decommitment::MixedDecommitment;
-use crate::core::channel::Channel;
+use crate::commitment_scheme::sha256_hash::{Sha256Hash, Sha256Hasher};
+use crate::core::channel::{Channel, Sha256Channel};
 use crate::core::prover::VerificationError;
 use crate::core::ColumnVec;
 
-type ProofChannel = Blake2sChannel;
+type ProofChannel = Sha256Channel;
 
 /// The verifier side of a FRI polynomial commitment scheme. See [super].
 #[derive(Default)]
@@ -41,7 +40,7 @@ impl CommitmentSchemeVerifier {
     /// Reads a commitment from the prover.
     pub fn commit(
         &mut self,
-        commitment: Blake2sHash,
+        commitment: Sha256Hash,
         log_sizes: Vec<u32>,
         channel: &mut ProofChannel,
     ) {
@@ -132,12 +131,12 @@ impl CommitmentSchemeVerifier {
 
 /// Verifier data for a single commitment tree in a commitment scheme.
 pub struct CommitmentTreeVerifier {
-    pub commitment: Blake2sHash,
+    pub commitment: Sha256Hash,
     pub log_sizes: Vec<u32>,
 }
 
 impl CommitmentTreeVerifier {
-    pub fn new(commitment: Blake2sHash, log_sizes: Vec<u32>, channel: &mut ProofChannel) -> Self {
+    pub fn new(commitment: Sha256Hash, log_sizes: Vec<u32>, channel: &mut ProofChannel) -> Self {
         channel.mix_digest(commitment);
         CommitmentTreeVerifier {
             commitment,
@@ -147,7 +146,7 @@ impl CommitmentTreeVerifier {
 
     pub fn verify(
         &self,
-        decommitment: &MixedDecommitment<BaseField, Blake2sHasher>,
+        decommitment: &MixedDecommitment<BaseField, Sha256Hasher>,
         queries: &[Vec<usize>],
     ) -> bool {
         decommitment.verify(

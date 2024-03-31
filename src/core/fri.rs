@@ -6,6 +6,7 @@ use std::ops::RangeInclusive;
 
 use itertools::Itertools;
 use num_traits::Zero;
+use serde::Serialize;
 use thiserror::Error;
 
 use super::backend::cpu::CPULineEvaluation;
@@ -624,7 +625,7 @@ impl LinePolyDegreeBound {
 }
 
 /// A FRI proof.
-#[derive(Debug)]
+#[derive(Debug,Clone,Serialize)]
 pub struct FriProof<H: Hasher> {
     pub inner_layers: Vec<FriLayerProof<H>>,
     pub last_layer_poly: LinePoly<SecureField>,
@@ -640,7 +641,7 @@ pub const CIRCLE_TO_LINE_FOLD_STEP: u32 = 1;
 /// Stores a subset of evaluations in a fri layer with their corresponding merkle decommitments.
 ///
 /// The subset corresponds to the set of evaluations needed by a FRI verifier.
-#[derive(Debug)]
+#[derive(Debug,Clone,Serialize)]
 pub struct FriLayerProof<H: Hasher> {
     /// The subset stored corresponds to the set of evaluations the verifier doesn't have but needs
     /// to fold and verify the merkle decommitment.
@@ -927,7 +928,7 @@ mod tests {
     use num_traits::{One, Zero};
 
     use super::{get_opening_positions, FriVerificationError, SparseCircleEvaluation};
-    use crate::commitment_scheme::blake2_hash::Blake2sHasher;
+    use crate::commitment_scheme::sha256_hash::Sha256Hasher;
     use crate::core::backend::cpu::{CPUCircleEvaluation, CPUCirclePoly, CPULineEvaluation};
     use crate::core::backend::CPUBackend;
     use crate::core::circle::{CirclePointIndex, Coset};
@@ -946,7 +947,7 @@ mod tests {
     /// Default blowup factor used for tests.
     const LOG_BLOWUP_FACTOR: u32 = 2;
 
-    type FriProver = super::FriProver<CPUBackend, Blake2sHasher>;
+    type FriProver = super::FriProver<CPUBackend, Sha256Hasher>;
 
     #[test]
     fn fold_line_works() {

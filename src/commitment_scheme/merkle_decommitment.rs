@@ -2,6 +2,7 @@ use std::fmt::{self, Display};
 use std::iter::Peekable;
 
 use itertools::Itertools;
+use serde::Serialize;
 
 use super::hasher::Hasher;
 use crate::core::fields::IntoSlice;
@@ -14,7 +15,7 @@ use crate::core::fields::IntoSlice;
 ///   queried path, or nodes with both children in the queried path are excluded.
 /// * `n_rows_in_leaf_block` - The number of trace-rows packed in each leaf block.
 // TODO(Ohad): derive Debug.
-#[derive(Default, Debug)]
+#[derive(Default, Debug,Clone,Serialize)]
 pub struct MerkleDecommitment<T: Sized + Display, H: Hasher> {
     pub leaf_blocks: Vec<Vec<T>>,
     pub layers: Vec<Vec<H::Hash>>,

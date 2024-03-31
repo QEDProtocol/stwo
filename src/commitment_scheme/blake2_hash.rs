@@ -2,10 +2,15 @@ use std::fmt;
 
 use blake2::digest::{Update, VariableOutput};
 use blake2::{Blake2s256, Blake2sVar, Digest};
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 
-// Wrapper for the blake2s hash type.
-#[derive(Clone, Copy, PartialEq, Default, Eq)]
-pub struct Blake2sHash([u8; 32]);
+
+
+#[serde_as]
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Default, Eq)]
+pub struct Blake2sHash(#[serde_as(as = "serde_with::hex::Hex")] pub [u8; 32]);
+
 
 impl From<Blake2sHash> for Vec<u8> {
     fn from(value: Blake2sHash) -> Self {
@@ -115,7 +120,7 @@ impl super::hasher::Hasher for Blake2sHasher {
             })
     }
     
-    fn hash_with_nonce(&self, seed: &[Self::NativeType], nonce: u64) -> Self::Hash {
+    fn hash_with_nonce(seed: &[Self::NativeType], nonce: u64) -> Self::Hash {
         let hash_input = seed
             .iter()
             .chain(nonce.to_le_bytes().iter())

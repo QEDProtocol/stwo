@@ -2,6 +2,8 @@ pub mod blake2_hash;
 pub mod blake2_merkle;
 pub mod blake2s_ref;
 pub mod blake3_hash;
+pub mod sha256_hash;
+pub mod sha256_merkle;
 pub mod hasher;
 pub mod merkle_decommitment;
 pub mod merkle_input;

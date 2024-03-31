@@ -1,5 +1,5 @@
 use super::backend::cpu::CPUCircleEvaluation;
-use super::channel::Blake2sChannel;
+use super::channel::Sha256Channel;
 use super::fields::m31::BaseField;
 use super::fields::qm31::SecureField;
 use crate::core::channel::Channel;
@@ -13,9 +13,9 @@ pub fn secure_eval_to_base_eval<EvalOrder>(
     )
 }
 
-pub fn test_channel() -> Blake2sChannel {
-    use crate::commitment_scheme::blake2_hash::Blake2sHash;
+pub fn test_channel() -> Sha256Channel {
+    use crate::commitment_scheme::sha256_hash::Sha256Hash;
 
-    let seed = Blake2sHash::from(vec![0; 32]);
-    Blake2sChannel::new(seed)
+    let seed = Sha256Hash::from(vec![0; 32]);
+    Sha256Channel::new(seed)
 }

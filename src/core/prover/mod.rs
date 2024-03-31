@@ -1,17 +1,19 @@
 use itertools::Itertools;
+use serde::Serialize;
 use thiserror::Error;
 
+use super::channel::Sha256Channel;
 use super::commitment_scheme::{CommitmentSchemeProof, TreeVec};
 use super::fri::FriVerificationError;
 use super::poly::circle::{SecureCirclePoly, MAX_CIRCLE_DOMAIN_LOG_SIZE};
 use super::proof_of_work::ProofOfWorkVerificationError;
 use super::ColumnVec;
-use crate::commitment_scheme::blake2_hash::Blake2sHasher;
 use crate::commitment_scheme::hasher::Hasher;
+use crate::commitment_scheme::sha256_hash::Sha256Hasher;
 use crate::core::air::{Air, AirExt};
 use crate::core::backend::cpu::CPUCircleEvaluation;
 use crate::core::backend::CPUBackend;
-use crate::core::channel::{Blake2sChannel, Channel as ChannelTrait};
+use crate::core::channel::{Channel as ChannelTrait};
 use crate::core::circle::CirclePoint;
 use crate::core::commitment_scheme::{CommitmentSchemeProver, CommitmentSchemeVerifier};
 use crate::core::fields::m31::BaseField;
@@ -20,15 +22,15 @@ use crate::core::poly::circle::CircleEvaluation;
 use crate::core::poly::BitReversedOrder;
 use crate::core::ComponentVec;
 
-type Channel = Blake2sChannel;
-type MerkleHasher = Blake2sHasher;
+type Channel = Sha256Channel;
+type MerkleHasher = Sha256Hasher;
 
 pub const LOG_BLOWUP_FACTOR: u32 = 1;
 pub const LOG_LAST_LAYER_DEGREE_BOUND: u32 = 0;
 pub const PROOF_OF_WORK_BITS: u32 = 12;
 pub const N_QUERIES: usize = 3;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct StarkProof {
     pub commitments: TreeVec<<MerkleHasher as Hasher>::Hash>,
     pub commitment_scheme_proof: CommitmentSchemeProof,

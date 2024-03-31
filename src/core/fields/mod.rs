@@ -3,6 +3,7 @@ use std::iter::{Product, Sum};
 use std::ops::{Mul, MulAssign, Neg};
 
 use num_traits::{NumAssign, NumAssignOps, NumOps, One};
+use serde::Serialize;
 
 use super::backend::ColumnOps;
 
@@ -111,6 +112,7 @@ pub trait Field:
     + for<'a> Product<&'a Self>
     + Sum
     + for<'a> Sum<&'a Self>
+    + Serialize
 {
     fn double(&self) -> Self {
         (*self) + (*self)

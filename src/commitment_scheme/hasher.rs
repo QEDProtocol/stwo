@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 use std::fmt::{Debug, Display};
 
+use serde::Serialize;
+
 pub trait Name {
     const NAME: Cow<'static, str>;
 }
@@ -52,7 +54,7 @@ pub trait Hasher: Sized + Default {
         hasher.update(data);
         hasher.finalize()
     }
-    fn hash_with_nonce(&self, seed: &[Self::NativeType], nonce: u64) -> Self::Hash;
+    fn hash_with_nonce(seed: &[Self::NativeType], nonce: u64) -> Self::Hash;
 
     /// Hash many inputs of the same length.
     /// Writes output directly to corresponding pointers in dst.
@@ -83,5 +85,6 @@ pub trait Hash<NativeType: Sized + Eq>:
     + Send
     + Sync
     + 'static
+    + Serialize
 {
 }

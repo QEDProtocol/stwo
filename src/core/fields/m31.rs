@@ -4,6 +4,7 @@ use std::ops::{
 };
 
 use bytemuck::{Pod, Zeroable};
+use serde::Serialize;
 
 use super::{ComplexConjugate, FieldExpOps};
 use crate::impl_field;
@@ -13,7 +14,7 @@ pub const N_BYTES_FELT: usize = 4;
 pub const P: u32 = 2147483647; // 2 ** 31 - 1
 
 #[repr(transparent)]
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Pod, Zeroable)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Pod, Zeroable, Serialize)]
 pub struct M31(pub u32);
 pub type BaseField = M31;
 

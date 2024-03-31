@@ -4,10 +4,10 @@ use num_traits::One;
 
 use self::air::{FibonacciAir, MultiFibonacciAir};
 use self::component::FibonacciComponent;
-use crate::commitment_scheme::blake2_hash::Blake2sHasher;
 use crate::commitment_scheme::hasher::Hasher;
+use crate::commitment_scheme::sha256_hash::Sha256Hasher;
 use crate::core::backend::cpu::CPUCircleEvaluation;
-use crate::core::channel::{Blake2sChannel, Channel};
+use crate::core::channel::{Channel, Sha256Channel};
 use crate::core::fields::m31::BaseField;
 use crate::core::fields::{FieldExpOps, IntoSlice};
 use crate::core::poly::circle::{CanonicCoset, CircleEvaluation};
@@ -51,7 +51,7 @@ impl Fibonacci {
 
     pub fn prove(&self) -> Result<StarkProof, ProvingError> {
         let trace = self.get_trace();
-        let channel = &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[self
+        let channel = &mut Sha256Channel::new(Sha256Hasher::hash(BaseField::into_slice(&[self
             .air
             .component
             .claim])));
@@ -59,7 +59,7 @@ impl Fibonacci {
     }
 
     pub fn verify(&self, proof: StarkProof) -> Result<(), VerificationError> {
-        let channel = &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[self
+        let channel = &mut Sha256Channel::new(Sha256Hasher::hash(BaseField::into_slice(&[self
             .air
             .component
             .claim])));
@@ -96,13 +96,13 @@ impl MultiFibonacci {
 
     pub fn prove(&self) -> Result<StarkProof, ProvingError> {
         let channel =
-            &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&self.claims)));
+            &mut Sha256Channel::new(Sha256Hasher::hash(BaseField::into_slice(&self.claims)));
         prove(&self.air, channel, self.get_trace())
     }
 
     pub fn verify(&self, proof: StarkProof) -> Result<(), VerificationError> {
         let channel =
-            &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&self.claims)));
+            &mut Sha256Channel::new(Sha256Hasher::hash(BaseField::into_slice(&self.claims)));
         verify(proof, &self.air, channel)
     }
 }
@@ -199,6 +199,15 @@ mod tests {
         let fib = Fibonacci::new(FIB_LOG_SIZE, m31!(443693538));
 
         let proof = fib.prove().unwrap();
+        fib.verify(proof).unwrap();
+    }
+    #[test]
+    fn test_prove_serde() {
+        const FIB_LOG_SIZE: u32 = 5;
+        let fib = Fibonacci::new(FIB_LOG_SIZE, m31!(443693538));
+
+        let proof = fib.prove().unwrap();
+        println!("proof: {}", serde_json::to_string(&proof).unwrap());
         fib.verify(proof).unwrap();
     }
 

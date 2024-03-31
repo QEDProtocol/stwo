@@ -1,17 +1,20 @@
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use super::channel::Blake2sChannel;
-use crate::commitment_scheme::blake2_hash::{Blake2sHash, Blake2sHasher};
 use crate::commitment_scheme::hasher::Hasher;
 use crate::core::channel::Channel;
+
+use super::channel::Sha256Channel;
 
 // TODO(ShaharS): generalize to more channels and create a from function in the hash traits.
 pub struct ProofOfWork {
     // Proof of work difficulty.
     pub n_bits: u32,
 }
+type ProofChannel = Sha256Channel;
 
-#[derive(Clone, Debug)]
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ProofOfWorkProof {
     pub nonce: u64,
 }
@@ -21,7 +24,7 @@ impl ProofOfWork {
         Self { n_bits }
     }
 
-    pub fn prove(&self, channel: &mut Blake2sChannel) -> ProofOfWorkProof {
+    pub fn prove(&self, channel: &mut ProofChannel) -> ProofOfWorkProof {
         let seed = channel.get_digest().as_ref().to_vec();
         let proof = self.grind(seed);
         channel.mix_nonce(proof.nonce);
@@ -30,7 +33,7 @@ impl ProofOfWork {
 
     pub fn verify(
         &self,
-        channel: &mut Blake2sChannel,
+        channel: &mut ProofChannel,
         proof: &ProofOfWorkProof,
     ) -> Result<(), ProofOfWorkVerificationError> {
         let seed = channel.get_digest().as_ref().to_vec();
@@ -59,13 +62,8 @@ impl ProofOfWork {
         }
     }
 
-    fn hash_with_nonce(&self, seed: &[u8], nonce: u64) -> Blake2sHash {
-        let hash_input = seed
-            .iter()
-            .chain(nonce.to_le_bytes().iter())
-            .cloned()
-            .collect::<Vec<_>>();
-        Blake2sHasher::hash(&hash_input)
+    fn hash_with_nonce(&self, seed: &[u8], nonce: u64) -> <ProofChannel as Channel>::Digest {
+        <ProofChannel as Channel>::Hasher::hash_with_nonce(seed, nonce)
     }
 }
 
@@ -92,13 +90,15 @@ pub enum ProofOfWorkVerificationError {
 
 #[cfg(test)]
 mod tests {
-    use crate::commitment_scheme::blake2_hash::Blake2sHash;
-    use crate::core::channel::{Blake2sChannel, Channel};
+    use crate::commitment_scheme::sha256_hash::Sha256Hash;
+    use crate::core::channel::Channel;
     use crate::core::proof_of_work::{ProofOfWork, ProofOfWorkProof};
+
+    use super::ProofChannel;
 
     #[test]
     fn test_verify_proof_of_work_success() {
-        let mut channel = Blake2sChannel::new(Blake2sHash::from(vec![0; 32]));
+        let mut channel = ProofChannel::new(Sha256Hash::from(vec![0; 32]));
         let proof_of_work_prover = ProofOfWork { n_bits: 11 };
         let proof = ProofOfWorkProof { nonce: 133 };
 
@@ -107,7 +107,7 @@ mod tests {
 
     #[test]
     fn test_verify_proof_of_work_fail() {
-        let mut channel = Blake2sChannel::new(Blake2sHash::from(vec![0; 32]));
+        let mut channel = ProofChannel::new(Sha256Hash::from(vec![0; 32]));
         let proof_of_work_prover = ProofOfWork { n_bits: 1 };
         let invalid_proof = ProofOfWorkProof { nonce: 0 };
 
@@ -119,8 +119,8 @@ mod tests {
     #[test]
     fn test_proof_of_work() {
         let n_bits = 12;
-        let mut prover_channel = Blake2sChannel::new(Blake2sHash::default());
-        let mut verifier_channel = Blake2sChannel::new(Blake2sHash::default());
+        let mut prover_channel = ProofChannel::new(Sha256Hash::default());
+        let mut verifier_channel = ProofChannel::new(Sha256Hash::default());
         let prover = ProofOfWork::new(n_bits);
         let verifier = ProofOfWork::new(n_bits);
 

@@ -1,10 +1,16 @@
 use std::fmt;
 
 use super::hasher::Name;
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 
-// Wrapper for the blake3 hash type.
-#[derive(Clone, Copy, PartialEq, Default, Eq)]
-pub struct Blake3Hash([u8; 32]);
+
+
+#[serde_as]
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Default, Eq)]
+pub struct Blake3Hash(#[serde_as(as = "serde_with::hex::Hex")] pub [u8; 32]);
+
+
 
 impl From<Blake3Hash> for Vec<u8> {
     fn from(value: Blake3Hash) -> Self {
@@ -112,7 +118,7 @@ impl super::hasher::Hasher for Blake3Hasher {
             })
     }
     
-    fn hash_with_nonce(&self, seed: &[Self::NativeType], nonce: u64) -> Self::Hash {
+    fn hash_with_nonce(seed: &[Self::NativeType], nonce: u64) -> Self::Hash {
         let hash_input = seed
             .iter()
             .chain(nonce.to_le_bytes().iter())

@@ -2,6 +2,7 @@ use std::iter::Peekable;
 
 use itertools::Itertools;
 use merging_iterator::MergeIter;
+use serde::Serialize;
 
 use super::hasher::Hasher;
 use super::merkle_input::MerkleTreeColumnLayout;
@@ -13,7 +14,7 @@ use crate::core::fields::{Field, IntoSlice};
 /// A correctly generated decommitment should hold all the information needed to generate the root
 /// of the tree, proving the queried values and the tree's column layout.
 // TODO(Ohad): write printing functions.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Serialize)]
 pub struct MixedDecommitment<F: Field, H: Hasher> {
     pub hashes: Vec<H::Hash>,
     pub witness_elements: Vec<F>,

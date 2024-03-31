@@ -1,6 +1,7 @@
 use core::fmt;
 
 use num_traits::{One, Zero};
+use serde::Serialize;
 
 use crate::commitment_scheme::hasher::{self, Hasher, Name};
 use crate::core::fields::m31::BaseField;
@@ -41,7 +42,7 @@ impl Default for PoseidonParams {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Default, Eq)]
+#[derive(Clone, Copy, PartialEq, Debug, Default, Eq, Serialize)]
 pub struct PoseidonHash([BaseField; POSEIDON_CAPACITY]);
 
 impl Name for PoseidonHash {
@@ -227,7 +228,7 @@ impl Hasher for PoseidonHasher {
         unimplemented!("concat_and_hash for PoseidonHasher")
     }
     
-    fn hash_with_nonce(&self, _seed: &[Self::NativeType], _nonce: u64) -> Self::Hash {
+    fn hash_with_nonce(_seed: &[Self::NativeType], _nonce: u64) -> Self::Hash {
         /*
         let lower30 = (nonce&0x3fffffffu64) as u32;
         let mid30 = ((nonce>>30u64)&0x3fffffffu64) as u32;

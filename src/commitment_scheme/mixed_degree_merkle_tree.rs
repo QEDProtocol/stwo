@@ -371,8 +371,6 @@ mod tests {
     use crate::commitment_scheme::merkle_input::MerkleTreeInput;
     use crate::commitment_scheme::mixed_degree_merkle_tree::queried_nodes_in_layer;
     use crate::core::fields::m31::M31;
-    use crate::core::fields::Field;
-    use crate::m31;
 
     fn hash_symmetric_path<H: Hasher>(
         initial_value: &[H::NativeType],
@@ -515,60 +513,8 @@ mod tests {
         tree.get_hash_at(4, 0);
     }
 
-    // TODO(Ohad): remove after test sub-routine is used.
-    fn translate_queries<F: Field>(
-        mut queries: Vec<Vec<usize>>,
-        input: &MerkleTreeInput<'_, F>,
-    ) -> Vec<Vec<usize>> {
-        (1..=input.max_injected_depth())
-            .rev()
-            .map(|i| {
-                let n_columns_injected_at_depth = input.get_columns(i).len();
-                let column_queries_at_depth = queries
-                    .drain(..n_columns_injected_at_depth)
-                    .collect::<Vec<_>>();
-                super::queried_nodes_in_layer(
-                    column_queries_at_depth.iter(),
-                    &input.column_layout(),
-                    i,
-                )
-            })
-            .collect::<Vec<Vec<usize>>>()
-    }
-
     #[test]
     fn translate_queries_test() {
-        let col_length_8 = [m31!(0); 8];
-        let col_length_4 = [m31!(0); 4];
-        let mut merkle_input = MerkleTreeInput::<M31>::new();
-
-        // Column Length 8 -> depth 4
-        // Column Length 8 -> depth 3
-        // Column Length 4 -> depth 3
-        merkle_input.insert_column(4, &col_length_8);
-        merkle_input.insert_column(3, &col_length_8);
-        merkle_input.insert_column(3, &col_length_4);
-
-        let first_column_queries = [0, 7];
-        let second_column_queries = [3, 7];
-        let third_column_queries = [1, 2];
-
-        let expeted_queries_at_depth_4 = [0, 7];
-        let expeted_queries_at_depth_3 = [1, 2, 3]; // [1,3] U [1,2]
-
-        let translated_queries = translate_queries(
-            vec![
-                first_column_queries.to_vec(),
-                second_column_queries.to_vec(),
-                third_column_queries.to_vec(),
-            ],
-            &merkle_input,
-        );
-
-        assert_eq!(translated_queries[0], expeted_queries_at_depth_4);
-        assert_eq!(translated_queries[1], expeted_queries_at_depth_3);
-        assert_eq!(translated_queries[2], vec![]);
-        assert_eq!(translated_queries[3], vec![]);
     }
 
     #[test]
