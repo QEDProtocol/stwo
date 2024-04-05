@@ -60,9 +60,9 @@ impl<T> TreeVec<ColumnVec<T>> {
                 .collect(),
         )
     }
-    /// Zips two [`TreeVec<ColumVec<T>>`] with the same structure (number of columns in each tree).
-    /// The resulting [`TreeVec<ColumVec<T>>`] has the same structure, with each value being a tuple
-    /// of the corresponding values from the input [`TreeVec<ColumVec<T>>`].
+    /// Zips two [`TreeVec<ColumnVec<T>>`] with the same structure (number of columns in each tree).
+    /// The resulting [`TreeVec<ColumnVec<T>>`] has the same structure, with each value being a tuple
+    /// of the corresponding values from the input [`TreeVec<ColumnVec<T>>`].
     pub fn zip_cols<U>(
         self,
         other: impl Into<TreeVec<ColumnVec<U>>>,
@@ -77,7 +77,7 @@ impl<T> TreeVec<ColumnVec<T>> {
     pub fn as_cols_ref(&self) -> TreeVec<ColumnVec<&T>> {
         TreeVec(self.iter().map(|column| column.iter().collect()).collect())
     }
-    /// Flattens the [`TreeVec<ColumVec<T>>`] into a single [`ColumnVec`] with all the columns
+    /// Flattens the [`TreeVec<ColumnVec<T>>`] into a single [`ColumnVec`] with all the columns
     /// combined.
     pub fn flatten(self) -> ColumnVec<T> {
         self.0.into_iter().flatten().collect()
@@ -91,7 +91,7 @@ impl<'a, T> From<&'a TreeVec<ColumnVec<T>>> for TreeVec<ColumnVec<&'a T>> {
 }
 
 impl<T> TreeVec<ColumnVec<Vec<T>>> {
-    /// Flattens a [`TreeVec<ColumVec<T>>`] of [Vec]s into a single [Vec] with all the elements
+    /// Flattens a [`TreeVec<ColumnVec<T>>`] of [Vec]s into a single [Vec] with all the elements
     /// combined.
     pub fn flatten_cols(self) -> Vec<T> {
         self.0.into_iter().flatten().flatten().collect()

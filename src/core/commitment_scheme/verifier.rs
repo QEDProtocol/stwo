@@ -44,6 +44,7 @@ impl CommitmentSchemeVerifier {
         log_sizes: Vec<u32>,
         channel: &mut ProofChannel,
     ) {
+        println!("commitment: {:?}", commitment);
         let verifier = CommitmentTreeVerifier::new(commitment, log_sizes, channel);
         self.trees.push(verifier);
     }
@@ -61,6 +62,8 @@ impl CommitmentSchemeVerifier {
             .column_log_sizes()
             .zip_cols(&sampled_points)
             .map_cols(|(log_size, sampled_points)| {
+                println!("bounds: log_size = {}, sampled_points_len: {}", log_size, sampled_points.len());
+
                 vec![CirclePolyDegreeBound::new(log_size); sampled_points.len()]
             })
             .flatten_cols()
@@ -149,6 +152,10 @@ impl CommitmentTreeVerifier {
         decommitment: &MixedDecommitment<BaseField, Sha256Hasher>,
         queries: &[Vec<usize>],
     ) -> bool {
+        println!("v_commitment: {:?}", self.commitment);
+        println!("queries: {:?}", queries);
+        println!("queried_values: {:?}", decommitment.queried_values);
+
         decommitment.verify(
             self.commitment,
             queries,

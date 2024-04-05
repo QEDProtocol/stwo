@@ -1,5 +1,7 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
+use serde::Serialize;
+
 use super::fields::m31::{BaseField, M31};
 use super::fields::qm31::SecureField;
 use super::fields::{ComplexConjugate, ExtensionOf, Field};
@@ -8,7 +10,7 @@ use crate::core::fields::qm31::P4;
 use crate::math::utils::egcd;
 
 /// A point on the complex circle. Treaed as an additive group.
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 pub struct CirclePoint<F: Field> {
     pub x: F,
     pub y: F,

@@ -343,10 +343,16 @@ pub fn queried_nodes_in_layer<'a>(
 ) -> Vec<usize> {
     let columns_lengths = column_layout.column_lengths_at_depth(layer_depth);
     let column_log_lengths = columns_lengths.iter().map(|c_len| c_len.ilog2() as usize);
+    println!("column_lengths: {:?}",columns_lengths);
+    println!("column_log_lengths: {:?}",column_log_lengths);
+    
     let mut node_queries = queries
         .into_iter()
         .zip(column_log_lengths)
         .flat_map(|(column_queries, log_column_length)| {
+            println!("column_queries: {:?}",column_queries);
+            println!("log_column_length: {:?}",log_column_length);
+            
             let log_n_bags_in_layer = layer_depth - 1;
             let log_n_elements_in_bag = log_column_length - log_n_bags_in_layer;
             column_queries

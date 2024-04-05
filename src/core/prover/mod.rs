@@ -120,10 +120,12 @@ pub fn verify(
 ) -> Result<(), VerificationError> {
     // Read trace commitment.
     let mut commitment_scheme = CommitmentSchemeVerifier::new();
+    dbg!(air.column_log_sizes());
     commitment_scheme.commit(proof.commitments[0], air.column_log_sizes(), channel);
     let random_coeff = channel.draw_felt();
 
     // Read composition polynomial commitment.
+    dbg!(air.composition_log_degree_bound());
     commitment_scheme.commit(
         proof.commitments[1],
         vec![air.composition_log_degree_bound(); 4],

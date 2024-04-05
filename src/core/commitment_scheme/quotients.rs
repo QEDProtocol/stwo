@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use std::iter::zip;
 
 use itertools::{izip, multiunzip, Itertools};
+use serde::Serialize;
 
 use crate::core::backend::cpu::quotients::{accumulate_row_quotients, column_constants};
 use crate::core::circle::CirclePoint;
@@ -66,6 +67,7 @@ impl ColumnSampleBatch {
     }
 }
 
+#[derive(Debug, Clone, Serialize)]
 pub struct PointSample {
     pub point: CirclePoint<SecureField>,
     pub value: SecureField,

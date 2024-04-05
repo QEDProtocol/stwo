@@ -38,13 +38,19 @@ impl<F: Field, H: Hasher> MixedDecommitment<F, H> {
     where
         F: IntoSlice<H::NativeType>,
     {
+        println!("witness_hashes: {:?}",self.hashes);
+
+        println!("queries: {:?}",queries);
         let mut witness_hashes = self.hashes.iter();
         let sorted_queries_by_layer = self.column_layout.sort_queries_by_layer(queries);
+        println!("zsorted_queries_by_layer: {:?}",sorted_queries_by_layer);
 
         let mut next_layer_hashes = vec![];
         let mut ancestor_indices = vec![];
         let mut witness_elements = self.witness_elements.iter().copied();
+        dbg!(self.column_layout.height());
         for i in (1..=self.column_layout.height()).rev() {
+            println!("ancestor_indices: {:?}",ancestor_indices);
             (next_layer_hashes, ancestor_indices) = Self::verify_single_layer(
                 i,
                 &sorted_queries_by_layer[i - 1],
@@ -57,6 +63,7 @@ impl<F: Field, H: Hasher> MixedDecommitment<F, H> {
             );
         }
         debug_assert_eq!(next_layer_hashes.len(), 1);
+        println!("===> root: {:?}",root);
         next_layer_hashes[0] == root
     }
 
@@ -74,6 +81,8 @@ impl<F: Field, H: Hasher> MixedDecommitment<F, H> {
     where
         F: IntoSlice<H::NativeType>,
     {
+        //println!("iqueries_to_layer: {:?}",queries_to_layer);
+        //println!("ilayer_depth: {}",layer_depth);
         let directly_queried_node_indices =
             queried_nodes_in_layer(queries_to_layer.iter(), column_layout, layer_depth);
         let mut node_indices = MergeIter::new(
@@ -82,7 +91,8 @@ impl<F: Field, H: Hasher> MixedDecommitment<F, H> {
         )
         .collect_vec();
         node_indices.dedup();
-
+        //println!("inode_indicies: {:?}", node_indices);
+        //println!("idirectly_queried_node_indices: {:?}", directly_queried_node_indices);
         // Instead of iterating over every query for every column in the layer, we advance the
         // specific column query-iterator only when it's in the current node.
         let mut column_query_iterators = queries_to_layer
@@ -93,12 +103,25 @@ impl<F: Field, H: Hasher> MixedDecommitment<F, H> {
         let mut hasher = H::new();
         for &node_index in &node_indices {
             // Push correct child hashes to the hasher.
-            match previous_layers_indices.next_if(|hash_index| *hash_index / 2 == node_index) {
-                None if layer_depth < column_layout.height() => {
-                    hasher.update(witness_hashes_iter.next().unwrap().as_ref());
-                    hasher.update(witness_hashes_iter.next().unwrap().as_ref());
+            match previous_layers_indices.next_if(|hash_index| {
+                //println!("hash_index: {}",hash_index);
+                //println!("node_index: {}",node_index);
+                if layer_depth < column_layout.height() {                
+                    println!("layer_depth={}, column_layout.height() {} ",layer_depth,column_layout.height());
+                }
+                *hash_index / 2 == node_index}) {
+                None => {          
+                    println!("case_Z {}, {}", layer_depth, column_layout.height());
+                    if layer_depth < column_layout.height() {                
+                        println!("case_A");
+    
+                        hasher.update(witness_hashes_iter.next().unwrap().as_ref());
+                        hasher.update(witness_hashes_iter.next().unwrap().as_ref());
+                    }
                 }
                 Some(hash_index) => {
+                    println!("case_B");
+                    println!("zB: layer_depth: {}, node_index: {}, hash_index: {}",layer_depth, node_index, hash_index);
                     if previous_layers_indices
                         .next_if(|&next_h| next_h ^ 1 == hash_index)
                         .is_some()
@@ -106,22 +129,24 @@ impl<F: Field, H: Hasher> MixedDecommitment<F, H> {
                         hasher.update(produced_hashes.next().unwrap().as_ref());
                         hasher.update(produced_hashes.next().unwrap().as_ref());
                     } else {
+                        let prod_hash = produced_hashes.next().unwrap();
+                        let wit_hash = *witness_hashes_iter.next().unwrap();
+                        println!("layer_depth: {}, node_index: {}, hash_index: {}, prod_hash: {:?}, wit_hash: {:?}",layer_depth, node_index, hash_index, prod_hash, wit_hash);
                         let (left_hash, right_hash) = if hash_index % 2 == 0 {
                             (
-                                produced_hashes.next().unwrap(),
-                                *witness_hashes_iter.next().unwrap(),
+                                prod_hash,
+                                wit_hash,
                             )
                         } else {
                             (
-                                *witness_hashes_iter.next().unwrap(),
-                                produced_hashes.next().unwrap(),
+                                wit_hash,
+                                prod_hash,
                             )
                         };
                         hasher.update(left_hash.as_ref());
                         hasher.update(right_hash.as_ref());
                     }
                 }
-                _ => {}
             }
 
             // Chunk size - according to the column's length and the current depth, we calculate the
@@ -132,15 +157,26 @@ impl<F: Field, H: Hasher> MixedDecommitment<F, H> {
                 .map(|&column_length| column_length >> (layer_depth - 1))
                 .zip(&mut column_query_iterators)
             {
+                //println!("chunk_size: {}", chunk_size);
                 for i in 0..chunk_size {
                     let column_chunk_start_index = chunk_size * node_index;
-                    match column_queries.next_if(|&&q| q == i + column_chunk_start_index) {
-                        Some(_) => hasher.update(F::into_slice(&[queried_values.next().unwrap()])),
+                    match column_queries.next_if(|&&q| {
+                        println!("q: {}, i: {}, column_chunk_start_index: {}", q, i, column_chunk_start_index);
+                        //println!("queried_values: {:?}",queried_values);
+                        q == i + column_chunk_start_index
+                    }) {
+                        Some(_) => {
+                            let v = queried_values.next().unwrap();
+                            println!("absorbing value: {:?}",v);
+                            hasher.update(F::into_slice(&[v]))
+                        },
                         None => hasher.update(F::into_slice(&[witness_elements.next().unwrap()])),
                     }
                 }
             }
-            next_layer_hashes.push(hasher.finalize_reset());
+            let val = hasher.finalize_reset();
+            println!("finalize_reset: {:?}",val);
+            next_layer_hashes.push(val);
         }
         (next_layer_hashes, node_indices)
     }

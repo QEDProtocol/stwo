@@ -259,6 +259,7 @@ impl Channel for Sha256Channel {
         padded_counter[0..counter_bytes.len()].copy_from_slice(&counter_bytes);
 
         hash_input.extend_from_slice(&padded_counter);
+        println!("hash_input_length: {}",hash_input.len());
 
         self.channel_time.inc_sent();
         Sha256Hasher::hash(&hash_input).into()
@@ -275,6 +276,7 @@ mod tests {
     use crate::commitment_scheme::sha256_hash::Sha256Hash;
     use crate::core::channel::{Blake2sChannel, Channel, Sha256Channel};
     use crate::core::fields::qm31::SecureField;
+    use crate::core::fields::Field;
     use crate::m31;
 
     #[test]
@@ -481,5 +483,15 @@ mod tests {
         channel.mix_felts(felts.as_slice());
 
         assert_ne!(initial_digest, channel.digest);
+    }
+    #[test]
+    pub fn test_get_felt(){
+        let initial_digest = Sha256Hash::from(vec![0; 32]);
+        let mut channel = Sha256Channel::new(initial_digest);
+        let felt = channel.draw_felt().double();
+        println!("drew: {:?}",felt);
+
+
+
     }
 }
